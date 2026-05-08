@@ -78,15 +78,17 @@
     color: var(--brown-dark);
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    background: #f5b8c5;
   }
 
   body {
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));
     position: relative;
     background: #f5b8c5;
   }
@@ -96,7 +98,8 @@
     position: fixed;
     inset: 0;
     width: 100%;
-    height: 100%;
+    height: 100vh;
+    height: 100dvh;
     z-index: 0;
     pointer-events: none;
   }
@@ -155,6 +158,18 @@
     white-space: nowrap;
   }
   h1 .line { display: block; }
+
+  /* Mobile tuning: keep shadow visually attached */
+  @media (max-width: 480px) {
+    h1 {
+      -webkit-text-stroke: 2px var(--brown-darkest);
+      text-shadow: 1.5px 1.5px 0 var(--brown-darkest);
+      transform: none;
+    }
+    .stars-cluster {
+      display: none;
+    }
+  }
 
   .subtitle {
     display: inline-block;
@@ -398,7 +413,7 @@
 <a href="#main" class="skip-link">Saltar al contenido principal</a>
 
 <!-- wavy checkerboard background (decorative) -->
-<svg class="bg-svg" id="bgSvg" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1200 1800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+<svg class="bg-svg" id="bgSvg" preserveAspectRatio="none" viewBox="0 0 1200 1800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
   <rect width="1200" height="1800" fill="#f5b8c5"/>
   <g id="checkers"></g>
 </svg>
@@ -526,6 +541,7 @@
 
   // -------- yellow 4-pointed stars (HTML positioned, always visible) --------
   (function buildSparkles() {
+    if (window.matchMedia && window.matchMedia('(max-width: 480px)').matches) return;
     const cluster = document.getElementById('starsCluster');
     // sharp 4-pointed star path with pinched waist (centered in viewBox)
     const starPath = "M50,2 C53,30 56,44 98,50 C56,56 53,70 50,98 C47,70 44,56 2,50 C44,44 47,30 50,2 Z";
