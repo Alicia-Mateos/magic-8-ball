@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bola Mágica 8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink:        #ffbacd;
+    --pink-deep:   #f7a3bb;
+    --orange:      #ff8a52;
+    --orange-deep: #f07434;
+    --brown-darkest: #1a0a05;
+    --brown-dark:    #2d1408;
+    --brown:         #3d1f0f;
+    --brown-light:   #5a3020;
+    --cream:         #f5ede0;
+    --cream-warm:    #ebdfc8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* visually hidden but accessible to screen readers */
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* skip link for keyboard users */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--brown-darkest);
+    color: var(--cream);
+    padding: 10px 16px;
+    text-decoration: none;
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    z-index: 100;
+    border-radius: 0 0 8px 0;
+  }
+  .skip-link:focus {
+    top: 0;
+  }
+
+  /* accessible focus rings */
+  :focus { outline: none; }
+  :focus-visible {
+    outline: 4px solid #1a0a05;
+    outline-offset: 4px;
+    border-radius: 8px;
+  }
+
+  /* respect reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'Fredoka', system-ui, sans-serif;
+    color: var(--brown-dark);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    background: #f5b8c5;
+  }
+
+  /* ---------- WAVY CHECKERBOARD BACKGROUND ---------- */
+  .bg-svg {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+  /* sparkle stars cluster — positioned next to the ball on its right */
+  .stars-cluster {
+    position: absolute;
+    top: -8%;
+    left: 108%;
+    width: 55%;
+    height: 70%;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .stars-cluster .star {
+    position: absolute;
+    transform-origin: center;
+    animation: sparkleTwinkle 2.4s ease-in-out infinite;
+  }
+  .stars-cluster .star svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+  }
+  /* size-only twinkle (no opacity change) — subtle pulse */
+  @keyframes sparkleTwinkle {
+    0%, 100% { transform: scale(0.88) rotate(var(--r,0deg)); }
+    50%      { transform: scale(1)    rotate(var(--r,0deg)); }
+  }
+
+  /* ---------- container ---------- */
+  .container {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    width: 100%;
+    max-width: 520px;
+  }
+
+  h1 {
+    font-family: 'Bagel Fat One', 'Fredoka', serif;
+    font-size: clamp(26px, 5.5vw, 50px);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    color: var(--cream);
+    text-align: center;
+    line-height: 1.0;
+    -webkit-text-stroke: 3.5px var(--brown-darkest);
+    paint-order: stroke fill;
+    text-shadow:
+      5px 5px 0 var(--brown-darkest);
+    transform: rotate(-1deg);
+    white-space: nowrap;
+  }
+  h1 .line { display: block; }
+
+  .subtitle {
+    display: inline-block;
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--brown-dark);
+    margin-top: 22px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--cream);
+    padding: 6px 14px;
+    border: 2.5px solid var(--brown-darkest);
+    border-radius: 20px;
+    box-shadow: 3px 3px 0 var(--brown-darkest);
+    transform: rotate(1.5deg);
+  }
+
+  /* ---------- the ball ---------- */
+  .ball-stage {
+    position: relative;
+    width: min(72vw, 320px);
+    height: min(72vw, 320px);
+    flex-shrink: 0;
+    margin: 8px 0;
+  }
+
+  .ball {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1;
+    background:
+      radial-gradient(circle at 32% 28%,
+        #6a3a26 0%,
+        #4e2614 28%,
+        #3a1d0d 60%,
+        #28100a 100%);
+    border: 4px solid var(--brown-darkest);
+    box-shadow:
+      inset -22px -28px 0 rgba(0, 0, 0, 0.28),
+      inset -8px -10px 30px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    transform-origin: center;
+  }
+
+  /* subtle warm highlight on top-left, flat-illustration style */
+  .ball::before {
+    content: '';
+    position: absolute;
+    top: 10%;
+    left: 14%;
+    width: 30%;
+    height: 22%;
+    background: radial-gradient(ellipse,
+      rgba(220, 140, 80, 0.4) 0%,
+      rgba(180, 90, 50, 0.2) 40%,
+      transparent 75%);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: rotate(-15deg);
+  }
+
+  /* tiny round white glint on top-left */
+  .ball::after {
+    content: '';
+    position: absolute;
+    top: 18%;
+    left: 26%;
+    width: 7%;
+    height: 5%;
+    background: var(--cream);
+    border-radius: 50%;
+    pointer-events: none;
+    border: 1.5px solid var(--brown-darkest);
+  }
+
+  /* the cream "8" circle (the eye of the ball) */
+  .eight-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 42%;
+    height: 42%;
+    margin: -21% 0 0 -21%;
+    background: var(--cream);
+    border-radius: 50%;
+    border: 3.5px solid var(--brown-darkest);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset -3px -4px 0 rgba(0,0,0,0.06);
+    z-index: 2;
+    transition: transform 0.5s ease;
+  }
+
+  .eight-circle .inner-shade {
+    position: absolute;
+    top: 12%;
+    right: 14%;
+    width: 22%;
+    height: 18%;
+    background: var(--cream-warm);
+    border-radius: 50%;
+    opacity: 0.7;
+  }
+
+  .eight {
+    font-family: 'Bagel Fat One', serif;
+    font-size: clamp(54px, 12vw, 92px);
+    font-weight: 400;
+    color: var(--brown-darkest);
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  /* answer text replaces the 8 in the same circle */
+  .answer-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.6);
+    width: 84%;
+    text-align: center;
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700;
+    color: var(--brown-darkest);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+    font-size: clamp(11px, 2.4vw, 15px);
+    opacity: 0;
+    transition:
+      transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity 0.5s ease;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .answer-text.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+
+  .eight.hidden {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  /* shake animation */
+  @keyframes shake {
+    0%   { transform: translate(0, 0) rotate(0); }
+    8%   { transform: translate(-12px, -8px) rotate(-6deg); }
+    18%  { transform: translate(14px, 6px) rotate(7deg); }
+    28%  { transform: translate(-10px, 10px) rotate(-5deg); }
+    38%  { transform: translate(12px, -10px) rotate(6deg); }
+    50%  { transform: translate(-14px, 4px) rotate(-7deg); }
+    62%  { transform: translate(10px, -6px) rotate(5deg); }
+    74%  { transform: translate(-6px, 8px) rotate(-3deg); }
+    86%  { transform: translate(6px, -4px) rotate(2deg); }
+    100% { transform: translate(0, 0) rotate(0); }
+  }
+  .shaking { animation: shake 1.4s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+
+  /* eight circle fades out while ball is shaking */
+  .eight-circle.fading {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+
+  /* ---------- input ---------- */
+  .question-area {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .question-input {
+    width: 82%;
+    max-width: 420px;
+    padding: 12px 20px;
+    border: 3px solid var(--brown-darkest);
+    border-radius: 30px;
+    background: var(--cream);
+    color: var(--brown-dark);
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+    text-align: center;
+    box-shadow: 4px 4px 0 var(--brown-darkest);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+  }
+  .question-input::placeholder {
+    color: rgba(45, 20, 8, 0.45);
+    font-style: italic;
+  }
+  .question-input:focus {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--brown-darkest);
+  }
+
+  /* focus ring styled like the ball */
+  .question-input:focus {
+    outline: none;
+  }
+  body.user-is-tabbing .question-input:focus {
+    outline: 4px solid var(--brown-darkest);
+    outline-offset: 4px;
+  }
+
+  /* keep the ball focus ring also on click/tap */
+  .ball:focus {
+    outline: 4px solid #1a0a05;
+    outline-offset: 4px;
+  }
+
+  .hint {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--brown-darkest);
+    text-align: center;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    min-height: 16px;
+    background: rgba(245, 237, 224, 0.7);
+    padding: 4px 12px;
+    border-radius: 12px;
+  }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Saltar al contenido principal</a>
+
+<!-- wavy checkerboard background (decorative) -->
+<svg class="bg-svg" id="bgSvg" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1200 1800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <rect width="1200" height="1800" fill="#f5b8c5"/>
+  <g id="checkers"></g>
+</svg>
+
+
+<main id="main" class="container">
+  <header style="text-align: center;">
+    <h1>
+      <span class="line">Tomar decisiones</span>
+      <span class="line">está sobrevalorado</span>
+    </h1>
+    <p class="subtitle">Por suerte existe esta app</p>
+  </header>
+
+  <form class="question-area" id="questionForm" novalidate>
+    <label for="question" class="visually-hidden">Escribe tu pregunta de sí o no</label>
+    <input
+      type="text"
+      class="question-input"
+      id="question"
+      name="question"
+      placeholder="Haz una pregunta de sí o no"
+      maxlength="120"
+      autocomplete="off"
+      aria-describedby="hint"
+    />
+    <p class="hint" id="hint" role="status" aria-live="polite">Haz click en la bola y resuelve tu vida</p>
+  </form>
+
+  <div class="ball-stage">
+    <div class="stars-cluster" id="starsCluster" aria-hidden="true"></div>
+    <button type="button" class="ball" id="ball" aria-label="Agitar la bola mágica para recibir una respuesta">
+
+      <div class="eight-circle" id="eightCircle" aria-hidden="true">
+        <span class="inner-shade"></span>
+        <span class="eight" id="eight">8</span>
+        <div class="answer-text" id="answerText"></div>
+      </div>
+
+    </button>
+  </div>
+
+  <!-- screen-reader live region announces answers -->
+  <div id="answerLive" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+</main>
+
+<script>
+  // Show focus ring on inputs only for keyboard users (Tab).
+  (function focusMode() {
+    function onFirstTab(e) {
+      if (e.key !== 'Tab') return;
+      document.body.classList.add('user-is-tabbing');
+      window.removeEventListener('keydown', onFirstTab, true);
+    }
+    function onPointer() {
+      document.body.classList.remove('user-is-tabbing');
+      window.addEventListener('keydown', onFirstTab, true);
+    }
+    window.addEventListener('keydown', onFirstTab, true);
+    window.addEventListener('mousedown', onPointer, true);
+    window.addEventListener('touchstart', onPointer, true);
+  })();
+
+  // -------- generate smooth wavy checkerboard (vector, no pixelation) --------
+  (function buildWavyCheckers() {
+    const checkers = document.getElementById('checkers');
+    const W = 1200, H = 1800;
+    const cols = 9, rows = 14;
+    const cellW = W / cols, cellH = H / rows;
+    const ampX = 45, ampY = 45;          // wave amplitude
+    const freqX = 0.85, freqY = 0.75;    // wave cycles
+    const phaseX = 0.7, phaseY = 0.3;
+
+    // Each grid intersection is displaced by two sine harmonics for organic waves
+    function pt(i, j) {
+      const x = i * cellW
+        + ampX * Math.sin(j * freqY + phaseY)
+        + ampX * 0.45 * Math.sin(j * freqY * 2.3 + phaseY * 1.7);
+      const y = j * cellH
+        + ampY * Math.sin(i * freqX + phaseX)
+        + ampY * 0.45 * Math.sin(i * freqX * 2.1 + phaseX * 1.5);
+      return { x, y };
+    }
+
+    function sampleHoriz(i0, i1, j, samples = 36) {
+      const arr = [];
+      for (let k = 0; k <= samples; k++) {
+        const t = k / samples;
+        arr.push(pt(i0 + (i1 - i0) * t, j));
+      }
+      return arr;
+    }
+    function sampleVert(i, j0, j1, samples = 36) {
+      const arr = [];
+      for (let k = 0; k <= samples; k++) {
+        const t = k / samples;
+        arr.push(pt(i, j0 + (j1 - j0) * t));
+      }
+      return arr;
+    }
+
+    // pad beyond viewport so edges aren't visible
+    const padCols = 2, padRows = 2;
+    const fragments = [];
+    for (let j = -padRows; j < rows + padRows; j++) {
+      for (let i = -padCols; i < cols + padCols; i++) {
+        const isOrange = (((i + j) % 2) + 2) % 2 === 0;
+        const top    = sampleHoriz(i, i + 1, j);
+        const right  = sampleVert(i + 1, j, j + 1);
+        const bottom = sampleHoriz(i + 1, i, j + 1);
+        const left   = sampleVert(i, j + 1, j);
+
+        const all = [...top, ...right.slice(1), ...bottom.slice(1), ...left.slice(1)];
+        let d = `M${all[0].x.toFixed(1)},${all[0].y.toFixed(1)}`;
+        for (let k = 1; k < all.length; k++) {
+          d += `L${all[k].x.toFixed(1)},${all[k].y.toFixed(1)}`;
+        }
+        d += 'Z';
+        const fill = isOrange ? '#dd6e2f' : '#f5b8c5';
+        fragments.push(`<path d="${d}" fill="${fill}"/>`);
+      }
+    }
+    checkers.innerHTML = fragments.join('');
+  })();
+
+  // -------- yellow 4-pointed stars (HTML positioned, always visible) --------
+  (function buildSparkles() {
+    const cluster = document.getElementById('starsCluster');
+    // sharp 4-pointed star path with pinched waist (centered in viewBox)
+    const starPath = "M50,2 C53,30 56,44 98,50 C56,56 53,70 50,98 C47,70 44,56 2,50 C44,44 47,30 50,2 Z";
+    // positions inside the cluster box (% of cluster size)
+    const stars = [
+      { left: '5%',  top: '0%',   size: 38, r: -6, delay: 0   }, // small upper-left
+      { left: '60%', top: '28%',  size: 50, r: 8,  delay: 0.8 }, // medium right
+      { left: '15%', top: '50%',  size: 78, r: -3, delay: 1.4 }  // big bottom
+    ];
+
+    cluster.innerHTML = stars.map(s => `
+      <div class="star" style="
+        left:${s.left}; top:${s.top};
+        width:${s.size}px; height:${s.size}px;
+        --r:${s.r}deg;
+        animation-delay:${-s.delay}s;">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <path d="${starPath}" fill="#f5c842" stroke="#1a0a05" stroke-width="5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    `).join('');
+  })();
+
+  // -------- respuestas --------
+  const ANSWERS = [
+    "Claro que sí.",
+    "Por supuesto que no, qué te has pensado.",
+    "En tus sueños.",
+    "No lo tengo claro.",
+    "Sigue soñando.",
+    "Sí, claro.",
+    "Sin duda.",
+    "Ni de coña.",
+    "Obviamente sí, criatura.",
+    "No, no y no."
+  ];
+
+  const ball         = document.getElementById('ball');
+  const eightCircle  = document.getElementById('eightCircle');
+  const eight        = document.getElementById('eight');
+  const answerText   = document.getElementById('answerText');
+  const questionEl   = document.getElementById('question');
+  const hintEl       = document.getElementById('hint');
+  const answerLive   = document.getElementById('answerLive');
+
+  let isAnimating = false;
+  let motionEnabled = false;
+
+  // -------- rotating placeholder --------
+  (function rotatePlaceholder() {
+    const placeholders = [
+      "Haz una pregunta de sí o no",
+      "¿Renuncio?",
+      "¿Le gusto?",
+      "¿Pido otra pizza?",
+      "¿Aprobaré la opo?"
+    ];
+    let i = 0;
+    setInterval(() => {
+      if (document.activeElement !== questionEl && !questionEl.value) {
+        i = (i + 1) % placeholders.length;
+        questionEl.placeholder = placeholders[i];
+      }
+    }, 2400);
+  })();
+
+
+  function ask() {
+    if (isAnimating) return;
+
+    const q = questionEl.value.trim();
+    if (!q) {
+      questionEl.focus();
+      hintEl.textContent = "Primero escribe tu dilema";
+      answerLive.textContent = "Primero escribe tu dilema.";
+      hintEl.style.background = 'rgba(255, 138, 82, 0.6)';
+      setTimeout(() => {
+        hintEl.textContent = "Haz click en la bola y resuelve tu vida";
+        hintEl.style.background = '';
+      }, 2000);
+      return;
+    }
+
+    isAnimating = true;
+    hintEl.textContent = "agitando...";
+
+    // hide previous answer
+    answerText.classList.remove('show');
+
+    // fade out the white circle entirely while shaking
+    eightCircle.classList.add('fading');
+    eight.classList.add('hidden');
+
+    // shake the ball
+    setTimeout(() => {
+      ball.classList.add('shaking');
+    }, 100);
+
+    // after animation, bring circle back with answer
+    setTimeout(() => {
+      ball.classList.remove('shaking');
+
+      const answer = ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
+      answerText.textContent = answer;
+      answerLive.textContent = `Respuesta: ${answer}`;
+      eight.style.display = 'none';
+
+      // bring circle back, then fade in the answer
+      eightCircle.classList.remove('fading');
+      requestAnimationFrame(() => {
+        setTimeout(() => answerText.classList.add('show'), 250);
+      });
+
+      hintEl.textContent = "¿Otro dilema?";
+      isAnimating = false;
+    }, 1600);
+  }
+
+  function reset() {
+    answerText.classList.remove('show');
+    setTimeout(() => {
+      eight.style.display = '';
+      eight.classList.remove('hidden');
+      eightCircle.classList.remove('fading');
+    }, 400);
+  }
+
+  ball.addEventListener('click', ask);
+  ball.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      ask();
+    }
+  });
+  questionEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      ask();
+    }
+  });
+  questionEl.addEventListener('input', () => {
+    if (!isAnimating && answerText.classList.contains('show')) {
+      reset();
+    }
+  });
+
+  // -------- shake detection --------
+  let lastX = 0, lastY = 0, lastZ = 0;
+  let lastShakeTime = 0;
+  const SHAKE_THRESHOLD = 18;
+
+  function handleMotion(e) {
+    const acc = e.accelerationIncludingGravity;
+    if (!acc) return;
+    const x = acc.x || 0, y = acc.y || 0, z = acc.z || 0;
+    const now = Date.now();
+    if (now - lastShakeTime < 1500) return;
+
+    const dx = Math.abs(x - lastX);
+    const dy = Math.abs(y - lastY);
+    const dz = Math.abs(z - lastZ);
+
+    if ((dx + dy + dz) > SHAKE_THRESHOLD && (dx > 8 || dy > 8 || dz > 8)) {
+      lastShakeTime = now;
+      ask();
+    }
+    lastX = x; lastY = y; lastZ = z;
+  }
+
+  function enableMotion() {
+    if (motionEnabled) return;
+    if (typeof DeviceMotionEvent !== 'undefined' &&
+        typeof DeviceMotionEvent.requestPermission === 'function') {
+      DeviceMotionEvent.requestPermission().then(state => {
+        if (state === 'granted') {
+          window.addEventListener('devicemotion', handleMotion);
+          motionEnabled = true;
+          hintEl.textContent = "Agita o haz click en la bola";
+        }
+      }).catch(() => {});
+    } else if (typeof DeviceMotionEvent !== 'undefined') {
+      window.addEventListener('devicemotion', handleMotion);
+      motionEnabled = true;
+    }
+  }
+
+  function firstGesture() {
+    enableMotion();
+    document.removeEventListener('touchstart', firstGesture);
+    document.removeEventListener('click', firstGesture);
+  }
+  document.addEventListener('touchstart', firstGesture, { once: true });
+  document.addEventListener('click', firstGesture, { once: true });
+
+  if (typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission !== 'function') {
+    window.addEventListener('devicemotion', handleMotion);
+    motionEnabled = true;
+  }
+</script>
+</body>
+</html>
