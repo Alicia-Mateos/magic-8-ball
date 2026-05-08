@@ -517,8 +517,8 @@
       return arr;
     }
 
-    // pad beyond viewport so edges aren't visible
-    const padCols = 2, padRows = 2;
+    // Pad beyond viewport so iOS Safari cropping (slice + dynamic bars) never shows the base fill.
+    const padCols = 7, padRows = 7;
     const fragments = [];
     for (let j = -padRows; j < rows + padRows; j++) {
       for (let i = -padCols; i < cols + padCols; i++) {
