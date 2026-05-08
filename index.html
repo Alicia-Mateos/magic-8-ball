@@ -96,10 +96,12 @@
   /* ---------- WAVY CHECKERBOARD BACKGROUND ---------- */
   .bg-svg {
     position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100vh;
-    height: 100dvh;
+    top: 50%;
+    left: 50%;
+    width: 120vw;
+    height: 120vh;
+    height: 120dvh;
+    transform: translate(-50%, -50%);
     z-index: 0;
     pointer-events: none;
   }
@@ -413,7 +415,7 @@
 <a href="#main" class="skip-link">Saltar al contenido principal</a>
 
 <!-- wavy checkerboard background (decorative) -->
-<svg class="bg-svg" id="bgSvg" preserveAspectRatio="none" viewBox="0 0 1200 1800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+<svg class="bg-svg" id="bgSvg" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1200 1800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
   <rect width="1200" height="1800" fill="#f5b8c5"/>
   <g id="checkers"></g>
 </svg>
