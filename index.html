@@ -96,8 +96,12 @@
   /* ---------- WAVY CHECKERBOARD BACKGROUND ---------- */
   .bg-svg {
     position: fixed;
-    /* Overscan so iOS Safari dynamic bars never reveal body background */
-    inset: -20vmax;
+    top: 50%;
+    left: 50%;
+    width: 120vw;
+    height: 120vh;
+    height: 120dvh;
+    transform: translate(-50%, -50%);
     z-index: 0;
     pointer-events: none;
   }
